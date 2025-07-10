@@ -14,6 +14,7 @@
 </head>
 <body>
   <img id="logo" src="logo.png" alt="Quiz Logo">
+  <h1>Friday 11 July SoloQuiz #1</h1>
   <p><strong>10 questions, 10 seconds each to answer.</strong><br>Speak clearly and loudly into your phone. Give 1 complete answer (no other speech).</p>
   <button onclick="startQuiz()">Start Quiz</button>
   <div id="question"></div>
@@ -49,7 +50,7 @@
 
     let current = 0;
     let userAnswers = [];
-    let isProcessing = false; // Flag to prevent multiple proceedToNextQuestion calls
+    let isProcessing = false;
 
     function startQuiz() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -126,13 +127,15 @@
 
     function displayResults() {
       let resultsHTML = "<h2>Results:</h2><ul style='list-style:none; padding-left:0;'>";
+      let totalScore = 0;
 
-      // Limit iteration to the minimum of userAnswers and acceptableAnswers lengths
+      // Generate HTML results and calculate score
       for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
         const ans = userAnswers[i] || "";
         const normalizedUser = ans.toLowerCase();
         const correctOptions = acceptableAnswers[i] || ["(no answer)"];
         const isCorrect = correctOptions.some(opt => normalizedUser.includes(opt) || opt.includes(normalizedUser)) && ans !== "";
+        if (isCorrect) totalScore++;
         const feedbackImg = isCorrect ? "correct.png" : "incorrect.png";
         resultsHTML += `<li><strong>Q${i + 1}</strong>: You said \"${ans || "(no answer)"}\"<br>` +
           `Correct: \"${correctOptions[0]}\"<br>` +
@@ -143,6 +146,26 @@
       document.getElementById('question').innerHTML = "";
       document.getElementById('timer').innerHTML = "";
       document.getElementById('results').innerHTML = resultsHTML;
+
+      // Generate SMS-compatible text file
+      let smsContent = "SoloQuiz #1\nFriday 11 July\n";
+      for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
+        const ans = userAnswers[i] || "";
+        const normalizedUser = ans.toLowerCase();
+        const correctOptions = acceptableAnswers[i] || ["(no answer)"];
+        const isCorrect = correctOptions.some(opt => normalizedUser.includes(opt) || opt.includes(normalizedUser)) && ans !== "";
+        smsContent += `${i + 1}. ${isCorrect ? "correct" : "incorrect"}\n`;
+      }
+      smsContent += `Total Score: ${totalScore}/10`;
+
+      // Create and download the text file
+      const blob = new Blob([smsContent], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'SoloQuiz_1_Results.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   </script>
 </body>
