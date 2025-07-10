@@ -4,12 +4,13 @@
   <title>Speech to Text Quiz</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 2em; text-align: center; background: #f9f9f9; }
-    button { font-size: 1.2em; padding: 0.5em 1em; }
+    button { font-size: 1.2em; padding: 0.5em 1em; margin: 0.5em; cursor: pointer; }
     #result { margin-top: 2em; font-size: 1.4em; }
     #logo { max-width: 250px; margin-bottom: 1em; }
     #question { font-size: 1.8em; margin-top: 1em; }
     #timer img { width: 24px; vertical-align: middle; margin-right: 0.5em; }
-    .feedback img { width: 20px; vertical-align: middle; }
+    .feedback img { width: 20px; height: auto; vertical-align: middle; }
+    textarea { width: 80%; height: 200px; margin-top: 1em; font-size: 1em; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -39,7 +40,7 @@
       ["romeo"],
       ["cockle"],
       ["nemesis"],
-      ["two"],
+      ["two", "2"],
       ["swine flu", "swine"],
       ["pink and white", "white and pink"],
       ["lady godiva", "godiva"],
@@ -47,6 +48,19 @@
       ["a diamond", "diamond"],
       ["indian ocean"]
     ];
+
+    const numberToWord = {
+      "1": "one",
+      "2": "two",
+      "3": "three",
+      "4": "four",
+      "5": "five",
+      "6": "six",
+      "7": "seven",
+      "8": "eight",
+      "9": "nine",
+      "10": "ten"
+    };
 
     let current = 0;
     let userAnswers = [];
@@ -131,41 +145,55 @@
 
       // Generate HTML results and calculate score
       for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
-        const ans = userAnswers[i] || "";
-        const normalizedUser = ans.toLowerCase();
+        let ans = userAnswers[i] || "";
+        let normalizedUser = ans.toLowerCase();
+        if (numberToWord[normalizedUser]) {
+          normalizedUser = numberToWord[normalizedUser];
+        }
         const correctOptions = acceptableAnswers[i] || ["(no answer)"];
         const isCorrect = correctOptions.some(opt => normalizedUser.includes(opt) || opt.includes(normalizedUser)) && ans !== "";
         if (isCorrect) totalScore++;
         const feedbackImg = isCorrect ? "correct.png" : "incorrect.png";
         resultsHTML += `<li><strong>Q${i + 1}</strong>: You said \"${ans || "(no answer)"}\"<br>` +
           `Correct: \"${correctOptions[0]}\"<br>` +
-          `<span class='feedback'><img src="${feedbackImg}"> ${isCorrect ? "Correct" : "Incorrect"}</span></li><br>`;
+          `<span class='feedback'><img src="${feedbackImg}" onerror="this.src='https://via.placeholder.com/20?text=X'" alt="${isCorrect ? 'Correct' : 'Incorrect'}"> ${isCorrect ? "Correct" : "Incorrect"}</span></li><br>`;
       }
 
-      resultsHTML += "</ul>";
-      document.getElementById('question').innerHTML = "";
-      document.getElementById('timer').innerHTML = "";
-      document.getElementById('results').innerHTML = resultsHTML;
-
-      // Generate SMS-compatible text file
+      // Generate shareable text for SMS
       let smsContent = "SoloQuiz #1\nFriday 11 July\n";
       for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
-        const ans = userAnswers[i] || "";
-        const normalizedUser = ans.toLowerCase();
+        let ans = userAnswers[i] || "";
+        let normalizedUser = ans.toLowerCase();
+        if (numberToWord[normalizedUser]) {
+          normalizedUser = numberToWord[normalizedUser];
+        }
         const correctOptions = acceptableAnswers[i] || ["(no answer)"];
         const isCorrect = correctOptions.some(opt => normalizedUser.includes(opt) || opt.includes(normalizedUser)) && ans !== "";
         smsContent += `${i + 1}. ${isCorrect ? "correct" : "incorrect"}\n`;
       }
       smsContent += `Total Score: ${totalScore}/10`;
 
-      // Create and download the text file
-      const blob = new Blob([smsContent], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'SoloQuiz_1_Results.txt';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Add textarea and share button
+      resultsHTML += `<p>Copy the results below to share via SMS:</p><textarea readonly id="resultsText">${smsContent}</textarea>`;
+      resultsHTML += `<br><button onclick="copyResults()">Share Results</button>`;
+
+      resultsHTML += "</ul>";
+      document.getElementById('question').innerHTML = "";
+      document.getElementById('timer').innerHTML = "";
+      document.getElementById('results').innerHTML = resultsHTML;
+    }
+
+    function copyResults() {
+      const resultsText = document.getElementById('resultsText').value;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(resultsText).then(() => {
+          alert("Results copied to clipboard!");
+        }).catch(() => {
+          alert("Failed to copy results. Please select and copy the text manually.");
+        });
+      } else {
+        alert("Clipboard API not supported. Please select and copy the text manually.");
+      }
     }
   </script>
 </body>
