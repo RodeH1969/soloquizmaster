@@ -2,15 +2,87 @@
 <html>
 <head>
   <title>Speech to Text Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body { font-family: Arial, sans-serif; padding: 2em; text-align: center; background: #f9f9f9; }
-    button { font-size: 1.2em; padding: 0.5em 1em; margin: 0.5em; cursor: pointer; }
-    #result { margin-top: 2em; font-size: 1.4em; }
-    #logo { max-width: 250px; margin-bottom: 1em; }
-    #question { font-size: 1.8em; margin-top: 1em; }
-    #timer img { width: 24px; vertical-align: middle; margin-right: 0.5em; }
-    .feedback img { width: 20px; height: auto; vertical-align: middle; }
-    textarea { width: 80%; height: 200px; margin-top: 1em; font-size: 1em; font-family: monospace; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2vmin;
+      text-align: center;
+      background: #f9f9f9;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    button {
+      font-size: 4vmin;
+      padding: 2vmin 4vmin;
+      margin: 2vmin;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #logo {
+      max-width: 40vmin;
+      margin-bottom: 2vmin;
+    }
+    #question {
+      font-size: 5vmin; /* Larger for mobile readability */
+      margin: 2vmin 0;
+      font-weight: bold;
+    }
+    #timer img {
+      width: 5vmin;
+      vertical-align: middle;
+      margin-right: 1vmin;
+    }
+    #timer {
+      font-size: 4vmin;
+    }
+    #results {
+      font-size: 3.5vmin;
+      margin-top: 2vmin;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    .feedback img {
+      width: 4vmin;
+      height: auto;
+      vertical-align: middle;
+    }
+    textarea {
+      width: 90%;
+      height: 30vmin;
+      margin-top: 2vmin;
+      font-size: 3vmin;
+      font-family: monospace;
+      resize: none;
+    }
+    h1 {
+      font-size: 4vmin;
+      margin: 1vmin 0;
+    }
+    p {
+      font-size: 3.5vmin;
+      margin: 1vmin 0;
+    }
+    @media (max-width: 600px) {
+      #question {
+        font-size: 6vmin; /* Even larger on small screens */
+      }
+      button {
+        font-size: 5vmin;
+        padding: 3vmin 5vmin;
+      }
+      #results {
+        font-size: 4vmin;
+      }
+      textarea {
+        font-size: 3.5vmin;
+      }
+    }
   </style>
 </head>
 <body>
@@ -143,7 +215,6 @@
       let resultsHTML = "<h2>Results:</h2><ul style='list-style:none; padding-left:0;'>";
       let totalScore = 0;
 
-      // Generate HTML results and calculate score
       for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
         let ans = userAnswers[i] || "";
         let normalizedUser = ans.toLowerCase();
@@ -159,7 +230,6 @@
           `<span class='feedback'><img src="${feedbackImg}" onerror="this.src='https://via.placeholder.com/20?text=X'" alt="${isCorrect ? 'Correct' : 'Incorrect'}"> ${isCorrect ? "Correct" : "Incorrect"}</span></li><br>`;
       }
 
-      // Generate shareable text for SMS
       let smsContent = "SoloQuiz #1\nFriday 11 July\n";
       for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
         let ans = userAnswers[i] || "";
@@ -173,9 +243,8 @@
       }
       smsContent += `Total Score: ${totalScore}/10`;
 
-      // Add textarea and share button
       resultsHTML += `<p>Copy the results below to share via SMS:</p><textarea readonly id="resultsText">${smsContent}</textarea>`;
-      resultsHTML += `<br><button onclick="copyResults()">Share Results</button>`;
+      resultsHTML += `<br><button onclick="copyResults(event)">Share Results</button>`;
 
       resultsHTML += "</ul>";
       document.getElementById('question').innerHTML = "";
@@ -183,7 +252,8 @@
       document.getElementById('results').innerHTML = resultsHTML;
     }
 
-    function copyResults() {
+    function copyResults(event) {
+      event.preventDefault(); // Prevent default browser share behavior
       const resultsText = document.getElementById('resultsText').value;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(resultsText).then(() => {
