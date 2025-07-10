@@ -29,7 +29,7 @@
       margin-bottom: 2vmin;
     }
     #question {
-      font-size: 5vmin; /* Larger for mobile readability */
+      font-size: 5vmin;
       margin: 2vmin 0;
       font-weight: bold;
     }
@@ -52,14 +52,6 @@
       height: auto;
       vertical-align: middle;
     }
-    textarea {
-      width: 90%;
-      height: 30vmin;
-      margin-top: 2vmin;
-      font-size: 3vmin;
-      font-family: monospace;
-      resize: none;
-    }
     h1 {
       font-size: 4vmin;
       margin: 1vmin 0;
@@ -70,7 +62,7 @@
     }
     @media (max-width: 600px) {
       #question {
-        font-size: 6vmin; /* Even larger on small screens */
+        font-size: 6vmin;
       }
       button {
         font-size: 5vmin;
@@ -78,9 +70,6 @@
       }
       #results {
         font-size: 4vmin;
-      }
-      textarea {
-        font-size: 3.5vmin;
       }
     }
   </style>
@@ -243,27 +232,25 @@
       }
       smsContent += `Total Score: ${totalScore}/10`;
 
-      resultsHTML += `<p>Copy the results below to share via SMS:</p><textarea readonly id="resultsText">${smsContent}</textarea>`;
-      resultsHTML += `<br><button onclick="copyResults(event)">Share Results</button>`;
+      resultsHTML += `<p>Download the results to share via SMS:</p>`;
+      resultsHTML += `<button onclick="downloadResults()">Share Results</button>`;
 
       resultsHTML += "</ul>";
       document.getElementById('question').innerHTML = "";
       document.getElementById('timer').innerHTML = "";
       document.getElementById('results').innerHTML = resultsHTML;
-    }
 
-    function copyResults(event) {
-      event.preventDefault(); // Prevent default browser share behavior
-      const resultsText = document.getElementById('resultsText').value;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(resultsText).then(() => {
-          alert("Results copied to clipboard!");
-        }).catch(() => {
-          alert("Failed to copy results. Please select and copy the text manually.");
-        });
-      } else {
-        alert("Clipboard API not supported. Please select and copy the text manually.");
-      }
+      // Function to trigger text file download
+      window.downloadResults = function() {
+        const blob = new Blob([smsContent], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'SoloQuiz_1_Results.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        alert("Results file downloaded! You can share it via SMS or other apps.");
+      };
     }
   </script>
 </body>
