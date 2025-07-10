@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Speech to Text Quiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; text-align: center; background: #f9f9f9; }
+    button { font-size: 1.2em; padding: 0.5em 1em; }
+    #result { margin-top: 2em; font-size: 1.4em; }
+    #logo { max-width: 250px; margin-bottom: 1em; }
+    #question { font-size: 1.8em; margin-top: 1em; }
+    #timer img { width: 24px; vertical-align: middle; margin-right: 0.5em; }
+    .feedback img { width: 20px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <img id="logo" src="logo.png" alt="Quiz Logo">
+  <p><strong>10 questions, 10 seconds each to answer.</strong><br>Speak clearly and loudly into your phone. Give 1 complete answer (no other speech).</p>
+  <button onclick="startQuiz()">Start Quiz</button>
+  <div id="question"></div>
+  <div id="timer"></div>
+  <div id="results"></div>
+
+  <script>
+    const questions = [
+      "In the famous play, who dies from poisoning, Romeo or Juliet?",
+      "What is both a small clam and a chamber of the heart?",
+      "Beginning with 'N', who was the Greek goddess of retribution?",
+      "How many private cards in Texas Holdem poker?",
+      "What in 2009 was the only flu pandemic of the 21st century?",
+      "What two colours adorned the traditional Mr Whippy van?",
+      "According to legend, who did Peeping Tom spy on?",
+      "India is named after which river?",
+      "What is the Great Star of Africa?",
+      "In which ocean is Reunion Island?"
+    ];
+
+    const acceptableAnswers = [
+      ["romeo"],
+      ["cockle"],
+      ["nemesis"],
+      ["two"],
+      ["swine flu", "swine"],
+      ["pink and white", "white and pink"],
+      ["lady godiva", "godiva"],
+      ["indus river", "indus"],
+      ["a diamond", "diamond"],
+      ["indian ocean"]
+    ];
+
+    let current = 0;
+    let userAnswers = [];
+    let isProcessing = false; // Flag to prevent multiple proceedToNextQuestion calls
+
+    function startQuiz() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech recognition is not supported in this browser. Please use Chrome or a compatible browser.");
+        return;
+      }
+      document.querySelector('button').style.display = 'none';
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      if (current >= questions.length) {
+        displayResults();
+        return;
+      }
+
+      document.getElementById('question').innerText = questions[current];
+
+      let timeLeft = 10;
+      let timerRunning = true;
+      document.getElementById('timer').innerHTML = `<img src="stopwatch.png"> ${timeLeft}s`;
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      const timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerHTML = `<img src="stopwatch.png"> ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          recognition.stop();
+          proceedToNextQuestion();
+        }
+      }, 1000);
+
+      recognition.onresult = function(event) {
+        const spoken = event.results[0][0].transcript.trim().toLowerCase();
+        userAnswers[current] = spoken;
+      };
+
+      recognition.onerror = function() {
+        userAnswers[current] = "";
+      };
+
+      recognition.onend = () => {
+        if (timerRunning) {
+          recognition.start();
+        } else if (!isProcessing) {
+          proceedToNextQuestion();
+        }
+      };
+
+      recognition.start();
+
+      function proceedToNextQuestion() {
+        if (isProcessing) return;
+        isProcessing = true;
+        clearInterval(timerInterval);
+        document.getElementById('timer').innerHTML = '';
+        userAnswers[current] = userAnswers[current] || "";
+        current++;
+        setTimeout(() => {
+          isProcessing = false;
+          nextQuestion();
+        }, 1000);
+      }
+    }
+
+    function displayResults() {
+      let resultsHTML = "<h2>Results:</h2><ul style='list-style:none; padding-left:0;'>";
+
+      // Limit iteration to the minimum of userAnswers and acceptableAnswers lengths
+      for (let i = 0; i < Math.min(userAnswers.length, acceptableAnswers.length); i++) {
+        const ans = userAnswers[i] || "";
+        const normalizedUser = ans.toLowerCase();
+        const correctOptions = acceptableAnswers[i] || ["(no answer)"];
+        const isCorrect = correctOptions.some(opt => normalizedUser.includes(opt) || opt.includes(normalizedUser)) && ans !== "";
+        const feedbackImg = isCorrect ? "correct.png" : "incorrect.png";
+        resultsHTML += `<li><strong>Q${i + 1}</strong>: You said \"${ans || "(no answer)"}\"<br>` +
+          `Correct: \"${correctOptions[0]}\"<br>` +
+          `<span class='feedback'><img src="${feedbackImg}"> ${isCorrect ? "Correct" : "Incorrect"}</span></li><br>`;
+      }
+
+      resultsHTML += "</ul>";
+      document.getElementById('question').innerHTML = "";
+      document.getElementById('timer').innerHTML = "";
+      document.getElementById('results').innerHTML = resultsHTML;
+    }
+  </script>
+</body>
+</html>
